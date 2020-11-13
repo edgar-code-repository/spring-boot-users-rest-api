@@ -27,6 +27,12 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 	
+	private static final String emailMessage = "El email ya se encuentra registrado";
+	
+	private static final String formatEmailMessage = "El formato del email es invalido";
+	
+	private static final String passwordMessage = "El formato de la password es incorrecto";
+	
 	@RequestMapping(value="/users", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<MessageDTO> retrieveUsers() {
 		logger.debug("[UserController][retrieveUsers][INICIO]");
@@ -97,7 +103,7 @@ public class UserController {
 			logger.debug("[UserController][createUser][flagEmailExists: " + flagEmailExists + "]");
 			
 			if (flagEmailExists) {
-				message.setMessage("El email ya se encuentra registrado!!!");
+				message.setMessage(emailMessage);
 				response = ResponseUtil.ok(message);
 			}
 			
@@ -105,7 +111,7 @@ public class UserController {
 			logger.debug("[UserController][createUser][flagPasswordFormat: " + flagPasswordFormat + "]");
 			
 			if (!flagPasswordFormat) {
-				message.setMessage("El formato de la password es incorrecto!!!");
+				message.setMessage(passwordMessage);
 				response = ResponseUtil.ok(message);
 			}			
 			
@@ -113,7 +119,7 @@ public class UserController {
 			logger.debug("[UserController][createUser][flagEmailFormat: " + flagEmailFormat + "]");
 			
 			if (!flagEmailFormat) {
-				message.setMessage("El formato del email es inválido!!!");
+				message.setMessage(formatEmailMessage);
 				response = ResponseUtil.ok(message);					
 			}
 			
