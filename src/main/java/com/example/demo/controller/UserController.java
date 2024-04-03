@@ -68,7 +68,7 @@ public class UserController {
 				logger.debug("[UserController][retrieveUsers][users list size: " + usersList.size() + "]");
 
 				message.setUsers(usersList);
-				if (usersList.size() == 0) {
+				if (usersList.isEmpty()) {
 					message.setMessage("No hay usuarios disponibles!");
 				}
 			}
@@ -96,28 +96,19 @@ public class UserController {
 			if (userRetrieved != null) {
 				logger.debug("[UserController][retrieveUserById][user retrieved: " + userRetrieved.toString() + "]");
 
-				MessageDTO message = new MessageDTO();
+				MessageDTO message = new MessageDTO(userRetrievedOK);
 				message.setUser(userRetrieved);
-				message.setMessage(userRetrievedOK);
-
 				response = ResponseEntity.ok(message);
 			}
 			else {
-				MessageDTO message = new MessageDTO();
-				message.setUser(userRetrieved);
-				message.setMessage(userNotFound);
-
-				response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+				response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageDTO(userNotFound));
 			}
-			
-
 		}
 		catch (Exception e) {
 			logger.error("[UserController][retrieveUserById][Error: " + e.toString() + "]");
 			
-			MessageDTO message = new MessageDTO();
-			message.setMessage("Error al recuperar usuario: " + e.toString());
-			response = ResponseUtil.error(message);			
+			MessageDTO message = new MessageDTO("Error al recuperar usuario: " + e.toString());
+			response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(message);
 		}
 		
 		logger.debug("[UserController][retrieveUserById][FIN]");
@@ -185,9 +176,8 @@ public class UserController {
 
 		ResponseEntity<MessageDTO> response = null;
 		try {
-			UserDTO userRetrieved = userService.getUserById(id);
-			if (userRetrieved != null) {
-				logger.debug("[UserController][updateUser][user retrieved: " + userRetrieved.toString() + "]");
+			if (userService.getUserById(id) != null) {
+				logger.debug("[UserController][updateUser][the user exists]");
 
 				user.setId(id);
 				user = userService.updateUser(user);
@@ -199,8 +189,9 @@ public class UserController {
 				response = ResponseEntity.ok(message);
 			}
 			else {
+				logger.debug("[UserController][updateUser][the user does not exist]");
+
 				MessageDTO message = new MessageDTO();
-				message.setUser(userRetrieved);
 				message.setMessage(userNotFound);
 
 				response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);

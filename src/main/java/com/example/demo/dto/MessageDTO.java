@@ -18,5 +18,9 @@ public class MessageDTO  {
 	private UserDTO user;
 	
 	private String message;
+
+	public MessageDTO(String msg) {
+		this.message = msg;
+	}
 	
 }

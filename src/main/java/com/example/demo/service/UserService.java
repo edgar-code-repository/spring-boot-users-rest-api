@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,66 +23,36 @@ public class UserService {
 
 	@Autowired
 	private UserRepository userRepository;
-	
+
+	@Autowired
+	private ModelMapper modelMapper;
+
 	public UserDTO addUser(UserDTO userDTO) {
-				
 		LocalDateTime now = LocalDateTime.now();
 		String jwtToken = JwtTokenUtil.createToken(userDTO.getEmail());
-		
-		User newUser = new User();
-		newUser.setName(userDTO.getName());
-		newUser.setEmail(userDTO.getEmail());
-		newUser.setPassword(userDTO.getPassword());
+
+		User newUser = modelMapper.map(userDTO, User.class);
 		newUser.setCreatedDate(now);
 		newUser.setLastModifiedDate(now);
 		newUser.setLastLogin(now);
 		newUser.setTokenJWT(jwtToken);
 		newUser.setActive(true);
-		
-		List<Phone> phones = new ArrayList<>();
-		for(PhoneDTO phoneDTO: userDTO.getPhones()) {
-			Phone phone = new Phone();
-			phone.setNumber(phoneDTO.getNumber());
-			phone.setCountryCode(phoneDTO.getCountryCode());
-			phone.setCityCode(phoneDTO.getCityCode());
-			
-			phones.add(phone);
-		}
+
+		List<Phone> phones = userDTO.getPhones().stream()
+				.map(phoneDTO -> modelMapper.map(phoneDTO, Phone.class))
+				.collect(Collectors.toList());
+
 		newUser.setPhones(phones);
-		
 		newUser = userRepository.save(newUser);
-		
-		userDTO = new UserDTO();
-		userDTO.setId(newUser.getId().toString());
-		userDTO.setName(newUser.getName());
-		userDTO.setCreatedDate(newUser.getCreatedDate());
-		userDTO.setLastModifiedDate(newUser.getLastModifiedDate());
-		userDTO.setLastLogin(newUser.getLastLogin());
-		userDTO.setTokenJWT(newUser.getTokenJWT());
-		userDTO.setActive(newUser.isActive());
-		
+
+		userDTO = modelMapper.map(newUser, UserDTO.class);
 		return userDTO;
 	}
 	
 	public List<UserDTO> getAllUsers() {
-		List<UserDTO> list = new ArrayList<>();
-		
-		List<User> allUsers = userRepository.findAll();
-
-		for(User user: allUsers) {
-			UserDTO userDTO = new UserDTO();
-			userDTO.setId(user.getId().toString());
-			userDTO.setName(user.getName());
-			userDTO.setCreatedDate(user.getCreatedDate());
-			userDTO.setLastModifiedDate(user.getLastModifiedDate());
-			userDTO.setLastLogin(user.getLastLogin());
-			userDTO.setTokenJWT(user.getTokenJWT());
-			userDTO.setActive(user.isActive());
-			
-			list.add(userDTO);
-		}
-		
-		return list;
+		return userRepository.findAll().stream()
+				.map(user -> modelMapper.map(user, UserDTO.class))
+				.collect(Collectors.toList());
 	}
 	
 	public UserDTO getUserById(String id) {
@@ -89,67 +61,40 @@ public class UserService {
 		Optional<User> userOptional = userRepository.findById(UUID.fromString(id));
 		if (userOptional.isPresent()) {
 			User user = userOptional.get();
-			
-			userDTO = new UserDTO();
-			userDTO.setId(user.getId().toString());
-			userDTO.setName(user.getName());
-			userDTO.setCreatedDate(user.getCreatedDate());
-			userDTO.setLastModifiedDate(user.getLastModifiedDate());
-			userDTO.setLastLogin(user.getLastLogin());
-			userDTO.setTokenJWT(user.getTokenJWT());
-			userDTO.setActive(user.isActive());			
+			userDTO = modelMapper.map(user, UserDTO.class);
 		}
 		
 		return userDTO;
-	}	
+	}
 	
 	public boolean exists(String email) {
 		boolean flag = false;
+
 		User user = userRepository.findByEmail(email);
 		if (user != null) {
 			flag = true;
 		}
+
 		return flag;
 	}
 
 	public UserDTO updateUser(UserDTO userDTO) {
+		Optional<User> userOptional = userRepository.findById(UUID.fromString(userDTO.getId()));
+		if (userOptional.isPresent()) {
+			User modifiedUser = userOptional.get();
+			modifiedUser.setLastModifiedDate(LocalDateTime.now());
+			modifiedUser.setName(userDTO.getName());
+			modifiedUser.setPassword(userDTO.getPassword());
 
-		LocalDateTime now = LocalDateTime.now();
-		String jwtToken = JwtTokenUtil.createToken(userDTO.getEmail());
+			List<Phone> phones = userDTO.getPhones().stream()
+					.map(phoneDTO -> modelMapper.map(phoneDTO, Phone.class))
+					.collect(Collectors.toList());
 
-		User newUser = new User();
-		newUser.setId(UUID.fromString(userDTO.getId()));
-		newUser.setName(userDTO.getName());
-		newUser.setEmail(userDTO.getEmail());
-		newUser.setPassword(userDTO.getPassword());
-		newUser.setCreatedDate(now);
-		newUser.setLastModifiedDate(now);
-		newUser.setLastLogin(now);
-		newUser.setTokenJWT(jwtToken);
-		newUser.setActive(true);
+			modifiedUser.setPhones(phones);
 
-		List<Phone> phones = new ArrayList<>();
-		for(PhoneDTO phoneDTO: userDTO.getPhones()) {
-			Phone phone = new Phone();
-			phone.setNumber(phoneDTO.getNumber());
-			phone.setCountryCode(phoneDTO.getCountryCode());
-			phone.setCityCode(phoneDTO.getCityCode());
-
-			phones.add(phone);
+			modifiedUser = userRepository.save(modifiedUser);
+			userDTO = modelMapper.map(modifiedUser, UserDTO.class);
 		}
-		newUser.setPhones(phones);
-
-		newUser = userRepository.save(newUser);
-
-		userDTO = new UserDTO();
-		userDTO.setId(newUser.getId().toString());
-		userDTO.setName(newUser.getName());
-		userDTO.setCreatedDate(newUser.getCreatedDate());
-		userDTO.setLastModifiedDate(newUser.getLastModifiedDate());
-		userDTO.setLastLogin(newUser.getLastLogin());
-		userDTO.setTokenJWT(newUser.getTokenJWT());
-		userDTO.setActive(newUser.isActive());
-
 		return userDTO;
 	}
 
