@@ -44,6 +44,12 @@ public class UserController {
 	@Value("${userRetrievedOK}")
 	private String userRetrievedOK;
 
+	@Value("${userNotFound}")
+	private String userNotFound;
+
+	@Value("${userUpdatedOK}")
+	private String userUpdatedOK;
+
 	@RequestMapping(value="/users", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<MessageDTO> retrieveUsers() {
 		logger.debug("[UserController][retrieveUsers][INICIO]");
@@ -93,7 +99,7 @@ public class UserController {
 			else {
 				MessageDTO message = new MessageDTO();
 				message.setUser(userRetrieved);
-				message.setMessage(userRetrievedOK);
+				message.setMessage(userNotFound);
 
 				response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
 			}
@@ -123,19 +129,9 @@ public class UserController {
 			
 			boolean flagEmailExists = userService.exists(user.getEmail());
 			logger.debug("[UserController][createUser][flagEmailExists: " + flagEmailExists + "]");
-			
-			if (flagEmailExists) {
-				message.setMessage(emailMessage);
-				response = ResponseUtil.ok(message);
-			}
-			
+
 			boolean flagPasswordFormat = ValidatorUtil.validatePassword(user.getPassword());
 			logger.debug("[UserController][createUser][flagPasswordFormat: " + flagPasswordFormat + "]");
-			
-			if (!flagPasswordFormat) {
-				message.setMessage(passwordMessage);
-				response = ResponseUtil.ok(message);
-			}			
 			
 			boolean flagEmailFormat = ValidatorUtil.validateEmail(user.getEmail());
 			logger.debug("[UserController][createUser][flagEmailFormat: " + flagEmailFormat + "]");
@@ -153,6 +149,15 @@ public class UserController {
 				
 				response = ResponseUtil.created(message);			
 			}
+			else if (flagEmailExists) {
+				message.setMessage(emailMessage);
+				response = ResponseUtil.ok(message);
+			}
+			else if (!flagPasswordFormat) {
+				message.setMessage(passwordMessage);
+				response = ResponseUtil.ok(message);
+			}
+
 		}
 		catch (Exception e) {
 			logger.error("[UserController][createUser][Error: " + e.toString() + "]");
@@ -166,8 +171,48 @@ public class UserController {
 		return response;
 	}
 
+	@RequestMapping(value="/users/{id}", method=RequestMethod.PUT, produces=MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<MessageDTO> updateUser(@PathVariable String id, @RequestBody UserDTO user) {
+		logger.debug("[UserController][updateUser][INICIO]");
+		logger.debug("[UserController][updateUser][id: " + id + "]");
+		logger.debug("[UserController][updateUser][user: " + user.toString() + "]");
+
+		ResponseEntity<MessageDTO> response = null;
+		try {
+			UserDTO userRetrieved = userService.getUserById(id);
+			if (userRetrieved != null) {
+				logger.debug("[UserController][updateUser][user retrieved: " + userRetrieved.toString() + "]");
+
+				user.setId(id);
+				user = userService.updateUser(user);
+
+				MessageDTO message = new MessageDTO();
+				message.setUser(user);
+				message.setMessage(userUpdatedOK);
+
+				response = ResponseEntity.ok(message);
+			}
+			else {
+				MessageDTO message = new MessageDTO();
+				message.setUser(userRetrieved);
+				message.setMessage(userNotFound);
+
+				response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+			}
 
 
+		}
+		catch (Exception e) {
+			logger.error("[UserController][updateUser][Error: " + e.toString() + "]");
+
+			MessageDTO message = new MessageDTO();
+			message.setMessage("Error al recuperar usuario: " + e.toString());
+			response = ResponseUtil.error(message);
+		}
+
+		logger.debug("[UserController][updateUser][FIN]");
+		return response;
+	}
 
 
 }
