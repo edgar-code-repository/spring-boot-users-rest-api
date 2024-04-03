@@ -1,10 +1,11 @@
-package com.example.demo.controller.rest;
+package com.example.demo.controller;
 
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,16 +28,21 @@ public class UserController {
 
 	@Autowired
 	private UserService userService;
-	
-	private static final String emailMessage = "El email ya se encuentra registrado!";
-	
-	private static final String formatEmailMessage = "El formato del email es invalido!";
-	
-	private static final String passwordMessage = "El formato de la password es incorrecto!";
 
-	private static final String emailNotFoundMessage = "El email NO se encuentra registrado!";
+	@Value("${emailMessage}")
+	private String emailMessage;
 
-	private static final String userRetrievedOK = "Usuario recuperado exitosamente!";
+	@Value("${formatEmailMessage}")
+	private String formatEmailMessage;
+
+	@Value("${passwordMessage}")
+	private String passwordMessage;
+
+	@Value("${emailNotFoundMessage}")
+	private String emailNotFoundMessage;
+
+	@Value("${userRetrievedOK}")
+	private String userRetrievedOK;
 
 	@RequestMapping(value="/users", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<MessageDTO> retrieveUsers() {
