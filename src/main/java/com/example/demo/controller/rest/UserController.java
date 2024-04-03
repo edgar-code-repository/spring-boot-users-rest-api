@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,32 +28,37 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 	
-	private static final String emailMessage = "El email ya se encuentra registrado";
+	private static final String emailMessage = "El email ya se encuentra registrado!";
 	
-	private static final String formatEmailMessage = "El formato del email es invalido";
+	private static final String formatEmailMessage = "El formato del email es invalido!";
 	
-	private static final String passwordMessage = "El formato de la password es incorrecto";
-	
+	private static final String passwordMessage = "El formato de la password es incorrecto!";
+
+	private static final String emailNotFoundMessage = "El email NO se encuentra registrado!";
+
+	private static final String userRetrievedOK = "Usuario recuperado exitosamente!";
+
 	@RequestMapping(value="/users", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<MessageDTO> retrieveUsers() {
 		logger.debug("[UserController][retrieveUsers][INICIO]");
-		
+
+		MessageDTO message = new MessageDTO();
 		ResponseEntity<MessageDTO> response = null;
 		try {
 			List<UserDTO> usersList = userService.getAllUsers();
 			if (usersList != null) {
 				logger.debug("[UserController][retrieveUsers][users list size: " + usersList.size() + "]");
+
+				message.setUsers(usersList);
+				if (usersList.size() == 0) {
+					message.setMessage("No hay usuarios disponibles!");
+				}
 			}
-			
-			MessageDTO message = new MessageDTO();
-			message.setUsers(usersList);
-			
 			response = ResponseUtil.ok(message);
 		}
 		catch (Exception e) {
 			logger.error("[UserController][retrieveUsers][Error: " + e.toString() + "]");
-			
-			MessageDTO message = new MessageDTO();
+
 			message.setMessage("Error al recuperar lista de usuarios: " + e.toString());
 			response = ResponseUtil.error(message);			
 		}
@@ -68,21 +74,31 @@ public class UserController {
 		
 		ResponseEntity<MessageDTO> response = null;
 		try {
-			List<UserDTO> usersList = userService.getAllUsers();
-			if (usersList != null) {
-				logger.debug("[UserController][retrieveUserById][users list size: " + usersList.size() + "]");
+			UserDTO userRetrieved = userService.getUserById(id);
+			if (userRetrieved != null) {
+				logger.debug("[UserController][retrieveUserById][user retrieved: " + userRetrieved.toString() + "]");
+
+				MessageDTO message = new MessageDTO();
+				message.setUser(userRetrieved);
+				message.setMessage(userRetrievedOK);
+
+				response = ResponseEntity.ok(message);
+			}
+			else {
+				MessageDTO message = new MessageDTO();
+				message.setUser(userRetrieved);
+				message.setMessage(userRetrievedOK);
+
+				response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
 			}
 			
-			MessageDTO message = new MessageDTO();
-			message.setUsers(usersList);
-			
-			response = ResponseUtil.ok(message);
+
 		}
 		catch (Exception e) {
 			logger.error("[UserController][retrieveUserById][Error: " + e.toString() + "]");
 			
 			MessageDTO message = new MessageDTO();
-			message.setMessage("Error al recuperar lista de usuarios: " + e.toString());
+			message.setMessage("Error al recuperar usuario: " + e.toString());
 			response = ResponseUtil.error(message);			
 		}
 		
@@ -143,5 +159,9 @@ public class UserController {
 		logger.debug("[UserController][createUser][FIN]");
 		return response;
 	}
-	
+
+
+
+
+
 }
