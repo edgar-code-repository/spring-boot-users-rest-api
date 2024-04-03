@@ -50,6 +50,12 @@ public class UserController {
 	@Value("${userUpdatedOK}")
 	private String userUpdatedOK;
 
+	@Value("${userDeleted}")
+	private String userDeleted;
+
+	@Value("${errorGeneral}")
+	private String errorGeneral;
+
 	@RequestMapping(value="/users", method=RequestMethod.GET, produces=MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<MessageDTO> retrieveUsers() {
 		logger.debug("[UserController][retrieveUsers][INICIO]");
@@ -206,7 +212,7 @@ public class UserController {
 			logger.error("[UserController][updateUser][Error: " + e.toString() + "]");
 
 			MessageDTO message = new MessageDTO();
-			message.setMessage("Error al recuperar usuario: " + e.toString());
+			message.setMessage("Error al actualizar datos de usuario: " + e.toString());
 			response = ResponseUtil.error(message);
 		}
 
@@ -214,5 +220,45 @@ public class UserController {
 		return response;
 	}
 
+	@RequestMapping(value="/users/{id}", method=RequestMethod.DELETE, produces=MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<MessageDTO> deleteUser(@PathVariable String id) {
+		logger.debug("[UserController][deleteUser][INICIO]");
+		logger.debug("[UserController][deleteUser][id: " + id + "]");
+
+		ResponseEntity<MessageDTO> response = null;
+		try {
+			UserDTO userRetrieved = userService.getUserById(id);
+			if (userRetrieved != null) {
+				logger.debug("[UserController][deleteUser][user retrieved: " + userRetrieved.toString() + "]");
+
+				boolean flagDelete = userService.deleteUserById(userRetrieved.getId());
+
+				MessageDTO message = new MessageDTO();
+				if (flagDelete) message.setMessage(userDeleted);
+				else message.setMessage(errorGeneral);
+
+				response = ResponseEntity.ok(message);
+			}
+			else {
+				MessageDTO message = new MessageDTO();
+				message.setUser(userRetrieved);
+				message.setMessage(userNotFound);
+
+				response = ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+			}
+
+
+		}
+		catch (Exception e) {
+			logger.error("[UserController][deleteUser][Error: " + e.toString() + "]");
+
+			MessageDTO message = new MessageDTO();
+			message.setMessage("Error al eliminar usuario: " + e.toString());
+			response = ResponseUtil.error(message);
+		}
+
+		logger.debug("[UserController][deleteUser][FIN]");
+		return response;
+	}
 
 }

@@ -152,5 +152,10 @@ public class UserService {
 
 		return userDTO;
 	}
+
+	public boolean deleteUserById(String id) {
+		userRepository.deleteById(UUID.fromString(id));
+		return true;
+	}
 	
 }
