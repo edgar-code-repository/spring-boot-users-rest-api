@@ -26,7 +26,7 @@ public class SwaggerConfiguration {
 
     private ApiInfo apiInfo() {
         return new ApiInfo(
-                "REST API DE CREACION DE USUARIOS",
+                "API REST PARA CREACION DE USUARIOS",
                 "API creada como tarea para entrevista.",
                 "Version 0.1",
                 "Terms of service",
